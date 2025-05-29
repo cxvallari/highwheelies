@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket Laps</title>
+</head>
+<body>
+  <h1>Lap Data</h1>
+  <pre id="output"></pre>
+
+  <script>
+    const output = document.getElementById('output');
+    const ws = new WebSocket('ws://localhost:3000');
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      output.textContent = JSON.stringify(data, null, 2);
+    };
+
+    ws.onopen = () => console.log('Connected to WebSocket');
+    ws.onclose = () => console.log('WebSocket closed');
+  </script>
+</body>
+</html>
