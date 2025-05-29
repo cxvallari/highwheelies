@@ -1,4 +1,3 @@
-
 -- Creazione del database
 CREATE DATABASE IF NOT EXISTS pista;
 USE pista;
