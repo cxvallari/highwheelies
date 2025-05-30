@@ -1,7 +1,8 @@
 "use client"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { MoreHorizontal, Wifi, WifiOff } from "lucide-react"
+import { MoreHorizontal, Wifi, WifiOff, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useWebSocket } from "@/hooks/useWebSocket"
 import { useState, useEffect } from "react"
 
@@ -26,7 +27,7 @@ interface MeasurementRow {
 }
 
 export function RealTimeSpeedTable() {
-  const { data, isConnected, error } = useWebSocket()
+  const { data, isConnected, error, forceReconnect, reconnectAttempts } = useWebSocket()
   const [measurements, setMeasurements] = useState<MeasurementRow[]>([])
 
   useEffect(() => {
@@ -54,9 +55,16 @@ export function RealTimeSpeedTable() {
     return (
       <div className="rounded-lg border border-border p-8 text-center">
         <WifiOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg font-semibold mb-2">Errore di Connessione</h3>
-        <p className="text-muted-foreground">{error}</p>
-        <p className="text-sm text-muted-foreground mt-2">Tentativo di connessione a: highwheelesapi.salanileo.dev</p>
+        <h3 className="text-lg font-semibold mb-2">Errore di Connessione WebSocket</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <p className="text-sm text-muted-foreground mb-4">WebSocket: ws://salanileohome.ddns.net:3004</p>
+        {reconnectAttempts > 0 && (
+          <p className="text-sm text-yellow-600 mb-4">Tentativi di riconnessione: {reconnectAttempts}</p>
+        )}
+        <Button onClick={forceReconnect} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Riprova Connessione
+        </Button>
       </div>
     )
   }
@@ -75,6 +83,9 @@ export function RealTimeSpeedTable() {
             <>
               <WifiOff className="h-4 w-4 text-red-500" />
               <span className="text-sm text-red-500">Disconnesso</span>
+              <Button onClick={forceReconnect} variant="ghost" size="sm">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
             </>
           )}
         </div>
@@ -84,7 +95,8 @@ export function RealTimeSpeedTable() {
         <div className="p-8 text-center">
           <div className="animate-pulse">
             <div className="h-4 w-4 bg-primary rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">In attesa di dati dal backend...</p>
+            <p className="text-muted-foreground">In attesa di dati dal WebSocket...</p>
+            <p className="text-xs text-muted-foreground mt-2">ws://salanileohome.ddns.net:3004</p>
           </div>
         </div>
       ) : (

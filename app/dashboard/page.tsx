@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { RealTimeMetrics } from "@/components/real-time-metrics"
 import { RealTimeSpeedChart } from "@/components/real-time-speed-chart"
 import { RealTimeSpeedTable } from "@/components/real-time-speed-table"
+import { ConnectionStatus } from "@/components/connection-status"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { BarChart3, Clock, GaugeCircle, LayoutDashboard, Settings } from "lucide-react"
 import Link from "next/link"
@@ -56,6 +57,10 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </nav>
+
+          <div className="px-2 mt-4">
+            <ConnectionStatus />
+          </div>
         </aside>
         <main className="p-4 md:p-6 overflow-auto">
           <div className="mb-6 flex items-center justify-between">
@@ -63,7 +68,7 @@ export default function DashboardPage() {
               <h1 className="text-xl md:text-2xl font-bold">Dashboard Velocità</h1>
               <div className="text-sm text-muted-foreground">
                 <Clock className="inline-block h-4 w-4 mr-1" />
-                Dati in tempo reale dal backend
+                Dati in tempo reale via WebSocket
               </div>
             </div>
             <div className="flex items-center gap-2">

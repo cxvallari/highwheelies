@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 
-// URL dell'API aggiornato
-const API_URL = "http://highwheelesapi.salanileo.dev"
+// URL WebSocket specifico
+const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
 
 interface SensorData {
   numero_sensore: number
@@ -22,39 +22,30 @@ export function useWebSocket() {
   const [error, setError] = useState<string | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Converti HTTP URL in WebSocket URL
-  const getWebSocketUrl = (url: string) => {
-    if (url.startsWith("https://")) {
-      return url.replace("https://", "wss://")
-    } else if (url.startsWith("http://")) {
-      return url.replace("http://", "ws://")
-    }
-    return url
-  }
+  const reconnectAttempts = useRef(0)
 
   const connect = () => {
     try {
-      const wsUrl = getWebSocketUrl(API_URL)
-      console.log("🔌 Tentativo connessione a:", wsUrl)
+      console.log("🔌 Tentativo connessione WebSocket a:", WEBSOCKET_URL)
 
-      const ws = new WebSocket(wsUrl)
+      const ws = new WebSocket(WEBSOCKET_URL)
       wsRef.current = ws
 
       ws.onopen = () => {
-        console.log("🔌 WebSocket connesso a", wsUrl)
+        console.log("✅ WebSocket connesso a", WEBSOCKET_URL)
         setIsConnected(true)
         setError(null)
+        reconnectAttempts.current = 0
       }
 
       ws.onmessage = (event) => {
         try {
           const lapData: LapData = JSON.parse(event.data)
-          console.log("📩 Dati ricevuti:", lapData)
+          console.log("📩 Dati ricevuti dal WebSocket:", lapData)
           setData(lapData)
         } catch (err) {
-          console.error("❌ Errore parsing dati:", err)
-          setError("Errore nel parsing dei dati")
+          console.error("❌ Errore parsing dati WebSocket:", err)
+          setError("Errore nel parsing dei dati ricevuti")
         }
       }
 
@@ -62,22 +53,38 @@ export function useWebSocket() {
         console.log("🔌 WebSocket disconnesso:", event.code, event.reason)
         setIsConnected(false)
 
-        // Riconnessione automatica dopo 5 secondi
+        // Incrementa i tentativi di riconnessione
+        reconnectAttempts.current++
+
+        // Riconnessione automatica con backoff esponenziale
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000) // Max 30 secondi
+
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log("🔄 Tentativo di riconnessione...")
+          console.log(`🔄 Tentativo di riconnessione #${reconnectAttempts.current}...`)
           connect()
-        }, 5000)
+        }, delay)
       }
 
       ws.onerror = (error) => {
         console.error("❌ Errore WebSocket:", error)
-        setError(`Errore di connessione WebSocket`)
+        setError(`Errore di connessione WebSocket a ${WEBSOCKET_URL}`)
         setIsConnected(false)
       }
     } catch (err) {
       console.error("❌ Errore creazione WebSocket:", err)
-      setError(`Impossibile connettersi al server`)
+      setError(`Impossibile connettersi a ${WEBSOCKET_URL}`)
     }
+  }
+
+  const forceReconnect = () => {
+    if (wsRef.current) {
+      wsRef.current.close()
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+    }
+    reconnectAttempts.current = 0
+    connect()
   }
 
   useEffect(() => {
@@ -93,5 +100,11 @@ export function useWebSocket() {
     }
   }, [])
 
-  return { data, isConnected, error }
+  return {
+    data,
+    isConnected,
+    error,
+    forceReconnect,
+    reconnectAttempts: reconnectAttempts.current,
+  }
 }

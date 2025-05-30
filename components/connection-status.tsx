@@ -1,56 +1,76 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Wifi, WifiOff, AlertCircle } from "lucide-react"
+import { Wifi, WifiOff, AlertCircle, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { api } from "@/utils/api"
 
 export function ConnectionStatus() {
-  const [status, setStatus] = useState<"connected" | "disconnected" | "testing">("testing")
+  const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "testing">("testing")
+  const [apiStatus, setApiStatus] = useState<"connected" | "disconnected" | "testing">("testing")
+
+  const testConnections = async () => {
+    setWsStatus("testing")
+    setApiStatus("testing")
+
+    // Test WebSocket
+    const wsConnected = await api.testWebSocketConnection()
+    setWsStatus(wsConnected ? "connected" : "disconnected")
+
+    // Test API HTTP
+    const apiConnected = await api.testApiConnection()
+    setApiStatus(apiConnected ? "connected" : "disconnected")
+  }
 
   useEffect(() => {
-    const testConnection = async () => {
-      setStatus("testing")
-      const isConnected = await api.testConnection()
-      setStatus(isConnected ? "connected" : "disconnected")
-    }
+    testConnections()
 
-    testConnection()
-
-    // Test ogni 30 secondi
-    const interval = setInterval(testConnection, 30000)
+    // Test ogni 60 secondi
+    const interval = setInterval(testConnections, 60000)
 
     return () => clearInterval(interval)
   }, [])
 
-  const getStatusInfo = () => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "connected":
-        return {
-          icon: <Wifi className="h-4 w-4 text-green-500" />,
-          text: "Connesso a highwheelies.salanileo.dev",
-          color: "text-green-500",
-        }
+        return <Wifi className="h-4 w-4 text-green-500" />
       case "disconnected":
-        return {
-          icon: <WifiOff className="h-4 w-4 text-red-500" />,
-          text: "Disconnesso da highwheelies.salanileo.dev",
-          color: "text-red-500",
-        }
+        return <WifiOff className="h-4 w-4 text-red-500" />
       case "testing":
-        return {
-          icon: <AlertCircle className="h-4 w-4 text-yellow-500" />,
-          text: "Verifica connessione...",
-          color: "text-yellow-500",
-        }
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />
     }
   }
 
-  const statusInfo = getStatusInfo()
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "connected":
+        return "Connesso"
+      case "disconnected":
+        return "Disconnesso"
+      case "testing":
+        return "Verifica..."
+    }
+  }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      {statusInfo.icon}
-      <span className={statusInfo.color}>{statusInfo.text}</span>
+    <div className="flex flex-col gap-2 p-4 bg-secondary/20 rounded-lg">
+      <div className="flex items-center justify-between">
+        <h4 className="font-medium">Stato Connessioni</h4>
+        <Button onClick={testConnections} variant="ghost" size="sm">
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        {getStatusIcon(wsStatus)}
+        <span>WebSocket (salanileohome.ddns.net:3004): {getStatusText(wsStatus)}</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        {getStatusIcon(apiStatus)}
+        <span>API HTTP (highwheelesapi.salanileo.dev): {getStatusText(apiStatus)}</span>
+      </div>
     </div>
   )
 }
