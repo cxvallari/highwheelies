@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -7,8 +9,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ['github.com', 'highwheelesapi.salanileo.dev'],
     unoptimized: true,
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

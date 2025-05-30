@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SpeedTable } from "@/components/speed-table"
+import { RealTimeSpeedTable } from "@/components/real-time-speed-table"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { BarChart3, Clock, GaugeCircle, LayoutDashboard, Settings } from "lucide-react"
 import Link from "next/link"
@@ -60,7 +60,7 @@ export default function StatistichePage() {
               <h1 className="text-xl md:text-2xl font-bold">Statistiche</h1>
               <div className="text-sm text-muted-foreground">
                 <Clock className="inline-block h-4 w-4 mr-1" />
-                Ultimo aggiornamento: 21 Maggio, 2025 - 09:06:38
+                Dati in tempo reale dal backend
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function StatistichePage() {
           <div className="mt-6 overflow-auto">
             <h2 className="text-lg font-semibold mb-4">Misurazioni Recenti</h2>
             <div className="overflow-x-auto rounded-lg border border-border">
-              <SpeedTable />
+              <RealTimeSpeedTable />
             </div>
           </div>
         </main>

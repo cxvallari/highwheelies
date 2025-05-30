@@ -4,44 +4,12 @@ import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { MetricsCard } from "@/components/metrics-card"
-import { SpeedChart } from "@/components/speed-chart"
-import { SpeedTable } from "@/components/speed-table"
-import { MiniSpeedChart } from "@/components/mini-speed-chart"
+import { RealTimeMetrics } from "@/components/real-time-metrics"
+import { RealTimeSpeedChart } from "@/components/real-time-speed-chart"
+import { RealTimeSpeedTable } from "@/components/real-time-speed-table"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { BarChart3, Clock, GaugeCircle, LayoutDashboard, Settings } from "lucide-react"
 import Link from "next/link"
-
-// Sample data for mini charts
-const dailyData = [
-  { value: 85 },
-  { value: 90 },
-  { value: 88 },
-  { value: 95 },
-  { value: 110 },
-  { value: 105 },
-  { value: 100 },
-]
-
-const weeklyData = [
-  { value: 95 },
-  { value: 100 },
-  { value: 92 },
-  { value: 98 },
-  { value: 105 },
-  { value: 110 },
-  { value: 108 },
-]
-
-const monthlyData = [
-  { value: 90 },
-  { value: 95 },
-  { value: 100 },
-  { value: 98 },
-  { value: 102 },
-  { value: 105 },
-  { value: 110 },
-]
 
 export default function DashboardPage() {
   // Set the theme from localStorage on component mount
@@ -95,45 +63,27 @@ export default function DashboardPage() {
               <h1 className="text-xl md:text-2xl font-bold">Dashboard Velocità</h1>
               <div className="text-sm text-muted-foreground">
                 <Clock className="inline-block h-4 w-4 mr-1" />
-                Ultimo aggiornamento: 21 Maggio, 2025 - 09:06:38
+                Dati in tempo reale dal backend
               </div>
             </div>
             <div className="flex items-center gap-2">
               <ThemeSwitcher />
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <MetricsCard
-              title="Ultima Velocità"
-              value="142"
-              unit="km/h"
-              change={{ value: "+32 km/h", percentage: "+29.1%", isPositive: false }}
-              chart={<MiniSpeedChart data={dailyData} />}
-            />
-            <MetricsCard
-              title="Velocità Media (Oggi)"
-              value="98"
-              unit="km/h"
-              change={{ value: "+3 km/h", percentage: "+3.2%", isPositive: true }}
-              chart={<MiniSpeedChart data={weeklyData} />}
-            />
-            <MetricsCard
-              title="Numero di Misurazioni"
-              value="42"
-              change={{ value: "+5", percentage: "+13.5%", isPositive: true }}
-              chart={<MiniSpeedChart data={monthlyData} color="#268bd2" />}
-            />
-          </div>
+
+          <RealTimeMetrics />
+
           <Card className="mt-6 p-4 md:p-6 rounded-lg border border-border">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold mb-2">Andamento Velocità</h2>
+              <h2 className="text-lg font-semibold mb-2">Andamento Velocità per Giro</h2>
             </div>
-            <SpeedChart />
+            <RealTimeSpeedChart />
           </Card>
+
           <div className="mt-6 overflow-auto">
             <h2 className="text-lg font-semibold mb-4">Misurazioni Recenti</h2>
             <div className="overflow-x-auto rounded-lg border border-border">
-              <SpeedTable />
+              <RealTimeSpeedTable />
             </div>
           </div>
         </main>
