@@ -1,6 +1,6 @@
 // Utility per chiamate API al backend
-const API_URL = "http://highwheelesapi.salanileo.dev"
-const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
+const API_URL = "https://highwheelesapi.salanileo.dev"
+const WEBSOCKET_URL = "wss://highwheelesapi.salanileo.dev/"
 
 export const api = {
   // Invia dati sensore (se necessario)

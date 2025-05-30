@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 
-// URL WebSocket fisso - forza ws:// anche su HTTPS
-const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
+// URL WebSocket sicuro
+const WEBSOCKET_URL = "wss://highwheelesapi.salanileo.dev/"
 
 interface SensorData {
   numero_sensore: number
@@ -28,8 +28,6 @@ export function useWebSocket() {
     try {
       console.log("🔌 Tentativo connessione WebSocket a:", WEBSOCKET_URL)
 
-      // Crea un iframe per aggirare la restrizione di sicurezza
-      // Questa è una soluzione temporanea, idealmente dovresti usare wss://
       const ws = new WebSocket(WEBSOCKET_URL)
       wsRef.current = ws
 
@@ -69,13 +67,7 @@ export function useWebSocket() {
 
       ws.onerror = (error) => {
         console.error("❌ Errore WebSocket:", error)
-        if (window.location.protocol === "https:") {
-          setError(
-            `Errore di connessione WebSocket: La pagina è su HTTPS ma il WebSocket è ws://. Prova ad aprire l'app in HTTP.`,
-          )
-        } else {
-          setError(`Errore di connessione WebSocket`)
-        }
+        setError(`Errore di connessione WebSocket`)
         setIsConnected(false)
       }
     } catch (err) {

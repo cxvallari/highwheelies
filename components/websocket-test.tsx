@@ -6,10 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Wifi, WifiOff, Send, Trash2, Copy, AlertTriangle } from "lucide-react"
+import { Wifi, WifiOff, Send, Trash2, Copy, Shield } from "lucide-react"
 
-// URL WebSocket fisso
-const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
+// URL WebSocket sicuro
+const WEBSOCKET_URL = "wss://highwheelesapi.salanileo.dev/"
 
 interface LogEntry {
   timestamp: string
@@ -59,15 +59,6 @@ export function WebSocketTest() {
 
       ws.onerror = (error) => {
         addLog("error", `❌ Errore WebSocket: ${error}`)
-
-        if (window.location.protocol === "https:") {
-          addLog(
-            "error",
-            "⚠️ La pagina è caricata su HTTPS ma stai tentando di connetterti a un WebSocket insicuro (ws://)",
-          )
-          addLog("info", "💡 Soluzione: Apri l'app in HTTP invece che HTTPS, o configura il server per supportare WSS")
-        }
-
         setIsConnected(false)
       }
     } catch (error) {
@@ -111,14 +102,9 @@ export function WebSocketTest() {
     }
   }, [logs])
 
-  // Inizializza con un avviso se siamo su HTTPS
+  // Inizializza con un messaggio informativo
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.protocol === "https:") {
-      addLog(
-        "info",
-        "⚠️ Questa pagina è caricata su HTTPS. Le connessioni WebSocket insicure (ws://) potrebbero essere bloccate dal browser.",
-      )
-    }
+    addLog("info", "ℹ️ Questa pagina utilizza un WebSocket sicuro (wss://).")
   }, [])
 
   const getLogColor = (type: LogEntry["type"]) => {
@@ -155,8 +141,6 @@ export function WebSocketTest() {
     }
   }
 
-  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:"
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -175,12 +159,10 @@ export function WebSocketTest() {
                   Disconnesso
                 </Badge>
               )}
-              {isHttps && (
-                <Badge variant="outline" className="border-yellow-500 text-yellow-500">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
-                  HTTPS
-                </Badge>
-              )}
+              <Badge variant="default" className="bg-blue-500">
+                <Shield className="h-3 w-3 mr-1" />
+                WSS
+              </Badge>
             </CardTitle>
             <CardDescription>Connessione: {WEBSOCKET_URL}</CardDescription>
           </div>
@@ -198,19 +180,6 @@ export function WebSocketTest() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isHttps && (
-          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-medium">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Avviso Sicurezza</span>
-            </div>
-            <p className="text-sm mt-1 text-muted-foreground">
-              Stai usando HTTPS ma tentando di connetterti a un WebSocket insicuro (ws://). I browser moderni bloccano
-              queste connessioni. Prova ad aprire l'app in HTTP o configura il server per supportare WSS.
-            </p>
-          </div>
-        )}
-
         {/* Invio Messaggi */}
         <div className="flex gap-2">
           <Input
@@ -282,8 +251,8 @@ export function WebSocketTest() {
           <div className="font-medium mb-2">Informazioni Protocollo:</div>
           <div className="space-y-1 text-muted-foreground">
             <div>• Pagina: {typeof window !== "undefined" ? window.location.protocol : "N/A"}</div>
-            <div>• WebSocket: ws:// (insicuro)</div>
-            <div>• Host: salanileohome.ddns.net:3004</div>
+            <div>• WebSocket: wss:// (sicuro)</div>
+            <div>• Host: highwheelesapi.salanileo.dev</div>
           </div>
         </div>
       </CardContent>

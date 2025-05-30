@@ -94,8 +94,8 @@ export function ConnectionStatus() {
       </div>
 
       <div className="text-xs text-muted-foreground space-y-1">
-        <div>WS: salanileohome.ddns.net:3004</div>
-        <div>API: highwheelesapi.salanileo.dev</div>
+        <div>WS: wss://highwheelesapi.salanileo.dev/</div>
+        <div>API: https://highwheelesapi.salanileo.dev</div>
       </div>
     </div>
   )
