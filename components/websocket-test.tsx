@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Wifi, WifiOff, Send, Trash2, Copy, Shield, ShieldOff } from "lucide-react"
+import { Wifi, WifiOff, Send, Trash2, Copy, AlertTriangle } from "lucide-react"
 
-const WEBSOCKET_HOST = "salanileohome.ddns.net:3004"
+// URL WebSocket fisso
+const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
 
 interface LogEntry {
   timestamp: string
@@ -21,18 +22,7 @@ export function WebSocketTest() {
   const [isConnected, setIsConnected] = useState(false)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [message, setMessage] = useState("Ciao dal client!")
-  const [connectionUrl, setConnectionUrl] = useState("")
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-
-  // Determina il protocollo WebSocket basato sul protocollo della pagina
-  const getWebSocketUrl = () => {
-    if (typeof window === "undefined") return ""
-
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-    const url = `${protocol}//${WEBSOCKET_HOST}`
-
-    return url
-  }
 
   const addLog = (type: LogEntry["type"], content: string) => {
     const newLog: LogEntry = {
@@ -45,14 +35,11 @@ export function WebSocketTest() {
 
   const connectWebSocket = () => {
     try {
-      const wsUrl = getWebSocketUrl()
-      setConnectionUrl(wsUrl)
-
       addLog("info", `Protocollo pagina: ${window.location.protocol}`)
-      addLog("info", `Protocollo WebSocket: ${wsUrl.startsWith("wss:") ? "wss: (sicuro)" : "ws: (insicuro)"}`)
-      addLog("connection", `Tentativo di connessione a ${wsUrl}`)
+      addLog("info", `URL WebSocket: ${WEBSOCKET_URL}`)
+      addLog("connection", `Tentativo di connessione a ${WEBSOCKET_URL}`)
 
-      const ws = new WebSocket(wsUrl)
+      const ws = new WebSocket(WEBSOCKET_URL)
 
       ws.onopen = () => {
         addLog("connection", "✅ Connessione WebSocket aperta")
@@ -72,6 +59,15 @@ export function WebSocketTest() {
 
       ws.onerror = (error) => {
         addLog("error", `❌ Errore WebSocket: ${error}`)
+
+        if (window.location.protocol === "https:") {
+          addLog(
+            "error",
+            "⚠️ La pagina è caricata su HTTPS ma stai tentando di connetterti a un WebSocket insicuro (ws://)",
+          )
+          addLog("info", "💡 Soluzione: Apri l'app in HTTP invece che HTTPS, o configura il server per supportare WSS")
+        }
+
         setIsConnected(false)
       }
     } catch (error) {
@@ -115,12 +111,13 @@ export function WebSocketTest() {
     }
   }, [logs])
 
-  // Inizializza l'URL di connessione
+  // Inizializza con un avviso se siamo su HTTPS
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const url = getWebSocketUrl()
-      setConnectionUrl(url)
-      addLog("info", `URL WebSocket determinato: ${url}`)
+    if (typeof window !== "undefined" && window.location.protocol === "https:") {
+      addLog(
+        "info",
+        "⚠️ Questa pagina è caricata su HTTPS. Le connessioni WebSocket insicure (ws://) potrebbero essere bloccate dal browser.",
+      )
     }
   }, [])
 
@@ -158,7 +155,7 @@ export function WebSocketTest() {
     }
   }
 
-  const isSecureConnection = connectionUrl.startsWith("wss:")
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:"
 
   return (
     <Card className="w-full">
@@ -178,19 +175,14 @@ export function WebSocketTest() {
                   Disconnesso
                 </Badge>
               )}
-              {isSecureConnection ? (
-                <Badge variant="default" className="bg-blue-500">
-                  <Shield className="h-3 w-3 mr-1" />
-                  WSS
-                </Badge>
-              ) : (
-                <Badge variant="outline">
-                  <ShieldOff className="h-3 w-3 mr-1" />
-                  WS
+              {isHttps && (
+                <Badge variant="outline" className="border-yellow-500 text-yellow-500">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  HTTPS
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Connessione: {connectionUrl || "Determinazione in corso..."}</CardDescription>
+            <CardDescription>Connessione: {WEBSOCKET_URL}</CardDescription>
           </div>
           <div className="flex gap-2">
             {isConnected ? (
@@ -206,6 +198,19 @@ export function WebSocketTest() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isHttps && (
+          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-medium">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Avviso Sicurezza</span>
+            </div>
+            <p className="text-sm mt-1 text-muted-foreground">
+              Stai usando HTTPS ma tentando di connetterti a un WebSocket insicuro (ws://). I browser moderni bloccano
+              queste connessioni. Prova ad aprire l'app in HTTP o configura il server per supportare WSS.
+            </p>
+          </div>
+        )}
+
         {/* Invio Messaggi */}
         <div className="flex gap-2">
           <Input
@@ -277,8 +282,8 @@ export function WebSocketTest() {
           <div className="font-medium mb-2">Informazioni Protocollo:</div>
           <div className="space-y-1 text-muted-foreground">
             <div>• Pagina: {typeof window !== "undefined" ? window.location.protocol : "N/A"}</div>
-            <div>• WebSocket: {isSecureConnection ? "wss: (sicuro)" : "ws: (insicuro)"}</div>
-            <div>• Host: {WEBSOCKET_HOST}</div>
+            <div>• WebSocket: ws:// (insicuro)</div>
+            <div>• Host: salanileohome.ddns.net:3004</div>
           </div>
         </div>
       </CardContent>

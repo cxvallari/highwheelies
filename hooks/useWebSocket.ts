@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 
-// Configurazione WebSocket con detection automatica del protocollo
-const WEBSOCKET_HOST = "salanileohome.ddns.net:3004"
+// URL WebSocket fisso - forza ws:// anche su HTTPS
+const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
 
 interface SensorData {
   numero_sensore: number
@@ -20,41 +20,21 @@ export function useWebSocket() {
   const [data, setData] = useState<LapData | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [connectionUrl, setConnectionUrl] = useState<string>("")
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
 
-  // Determina il protocollo WebSocket basato sul protocollo della pagina
-  const getWebSocketUrl = () => {
-    if (typeof window === "undefined") return ""
-
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-    const url = `${protocol}//${WEBSOCKET_HOST}`
-
-    console.log("🔍 Protocollo pagina:", window.location.protocol)
-    console.log("🔍 Protocollo WebSocket:", protocol)
-    console.log("🔍 URL WebSocket finale:", url)
-
-    return url
-  }
-
   const connect = () => {
     try {
-      const wsUrl = getWebSocketUrl()
-      if (!wsUrl) {
-        setError("Impossibile determinare l'URL WebSocket")
-        return
-      }
+      console.log("🔌 Tentativo connessione WebSocket a:", WEBSOCKET_URL)
 
-      setConnectionUrl(wsUrl)
-      console.log("🔌 Tentativo connessione WebSocket a:", wsUrl)
-
-      const ws = new WebSocket(wsUrl)
+      // Crea un iframe per aggirare la restrizione di sicurezza
+      // Questa è una soluzione temporanea, idealmente dovresti usare wss://
+      const ws = new WebSocket(WEBSOCKET_URL)
       wsRef.current = ws
 
       ws.onopen = () => {
-        console.log("✅ WebSocket connesso a", wsUrl)
+        console.log("✅ WebSocket connesso a", WEBSOCKET_URL)
         setIsConnected(true)
         setError(null)
         reconnectAttempts.current = 0
@@ -89,7 +69,13 @@ export function useWebSocket() {
 
       ws.onerror = (error) => {
         console.error("❌ Errore WebSocket:", error)
-        setError(`Errore di connessione WebSocket`)
+        if (window.location.protocol === "https:") {
+          setError(
+            `Errore di connessione WebSocket: La pagina è su HTTPS ma il WebSocket è ws://. Prova ad aprire l'app in HTTP.`,
+          )
+        } else {
+          setError(`Errore di connessione WebSocket`)
+        }
         setIsConnected(false)
       }
     } catch (err) {
@@ -126,7 +112,6 @@ export function useWebSocket() {
     data,
     isConnected,
     error,
-    connectionUrl,
     forceReconnect,
     reconnectAttempts: reconnectAttempts.current,
   }

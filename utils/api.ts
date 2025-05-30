@@ -1,13 +1,6 @@
 // Utility per chiamate API al backend
 const API_URL = "http://highwheelesapi.salanileo.dev"
-const WEBSOCKET_HOST = "salanileohome.ddns.net:3004"
-
-// Funzione per determinare il protocollo WebSocket
-const getWebSocketUrl = () => {
-  if (typeof window === "undefined") return ""
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-  return `${protocol}//${WEBSOCKET_HOST}`
-}
+const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
 
 export const api = {
   // Invia dati sensore (se necessario)
@@ -44,14 +37,8 @@ export const api = {
   testWebSocketConnection: () => {
     return new Promise((resolve) => {
       try {
-        const wsUrl = getWebSocketUrl()
-        if (!wsUrl) {
-          resolve(false)
-          return
-        }
-
-        console.log("🧪 Test connessione WebSocket:", wsUrl)
-        const ws = new WebSocket(wsUrl)
+        console.log("🧪 Test connessione WebSocket:", WEBSOCKET_URL)
+        const ws = new WebSocket(WEBSOCKET_URL)
 
         ws.onopen = () => {
           console.log("✅ Test WebSocket riuscito")
@@ -88,7 +75,4 @@ export const api = {
       return false
     }
   },
-
-  // Ottieni URL WebSocket corrente
-  getWebSocketUrl,
 }

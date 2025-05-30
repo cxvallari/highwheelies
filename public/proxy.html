@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Proxy</title>
+</head>
+<body>
+  <script>
+    // Questo file serve come proxy per WebSocket insicuri da pagine HTTPS
+    // Viene caricato in un iframe e comunica con la pagina principale tramite postMessage
+    
+    let socket = null;
+    
+    window.addEventListener('message', function(event) {
+      // Verifica l'origine del messaggio
+      if (event.origin !== window.location.origin) {
+        console.log('Messaggio da origine non autorizzata:', event.origin);
+        return;
+      }
+      
+      const data = event.data;
+      
+      if (data.type === 'connect') {
+        // Connetti al WebSocket
+        try {
+          socket = new WebSocket(data.url);
+          
+          socket.onopen = function() {
+            window.parent.postMessage({ type: 'open' }, '*');
+          };
+          
+          socket.onmessage = function(msg) {
+            window.parent.postMessage({ type: 'message', data: msg.data }, '*');
+          };
+          
+          socket.onclose = function(event) {
+            window.parent.postMessage({ type: 'close', code: event.code, reason: event.reason }, '*');
+          };
+          
+          socket.onerror = function(error) {
+            window.parent.postMessage({ type: 'error', error: 'WebSocket error' }, '*');
+          };
+        } catch (error) {
+          window.parent.postMessage({ type: 'error', error: error.toString() }, '*');
+        }
+      } else if (data.type === 'send' && socket) {
+        // Invia messaggio
+        socket.send(data.message);
+      } else if (data.type === 'close' && socket) {
+        // Chiudi connessione
+        socket.close();
+      }
+    });
+    
+    // Notifica alla pagina principale che il proxy è pronto
+    window.parent.postMessage({ type: 'ready' }, '*');
+  </script>
+</body>
+</html>
