@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Wifi, WifiOff, AlertCircle, RefreshCw } from "lucide-react"
+import { Wifi, WifiOff, AlertCircle, RefreshCw, TestTube } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { api } from "@/utils/api"
+import Link from "next/link"
 
 export function ConnectionStatus() {
   const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "testing">("testing")
@@ -42,34 +44,58 @@ export function ConnectionStatus() {
     }
   }
 
-  const getStatusText = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "connected":
-        return "Connesso"
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Connesso
+          </Badge>
+        )
       case "disconnected":
-        return "Disconnesso"
+        return <Badge variant="destructive">Disconnesso</Badge>
       case "testing":
-        return "Verifica..."
+        return <Badge variant="secondary">Verifica...</Badge>
     }
   }
 
   return (
-    <div className="flex flex-col gap-2 p-4 bg-secondary/20 rounded-lg">
+    <div className="flex flex-col gap-3 p-4 bg-secondary/20 rounded-lg">
       <div className="flex items-center justify-between">
         <h4 className="font-medium">Stato Connessioni</h4>
-        <Button onClick={testConnections} variant="ghost" size="sm">
-          <RefreshCw className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-1">
+          <Button onClick={testConnections} variant="ghost" size="sm">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Link href="/test-websocket">
+            <Button variant="ghost" size="sm" title="Test WebSocket">
+              <TestTube className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm">
-        {getStatusIcon(wsStatus)}
-        <span>WebSocket (salanileohome.ddns.net:3004): {getStatusText(wsStatus)}</span>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            {getStatusIcon(wsStatus)}
+            <span>WebSocket</span>
+          </div>
+          {getStatusBadge(wsStatus)}
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            {getStatusIcon(apiStatus)}
+            <span>API HTTP</span>
+          </div>
+          {getStatusBadge(apiStatus)}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm">
-        {getStatusIcon(apiStatus)}
-        <span>API HTTP (highwheelesapi.salanileo.dev): {getStatusText(apiStatus)}</span>
+      <div className="text-xs text-muted-foreground space-y-1">
+        <div>WS: salanileohome.ddns.net:3004</div>
+        <div>API: highwheelesapi.salanileo.dev</div>
       </div>
     </div>
   )
