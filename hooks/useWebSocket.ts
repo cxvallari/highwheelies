@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 
-// URL WebSocket specifico
-const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
+// Configurazione WebSocket con detection automatica del protocollo
+const WEBSOCKET_HOST = "salanileohome.ddns.net:3004"
 
 interface SensorData {
   numero_sensore: number
@@ -20,19 +20,41 @@ export function useWebSocket() {
   const [data, setData] = useState<LapData | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [connectionUrl, setConnectionUrl] = useState<string>("")
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
 
+  // Determina il protocollo WebSocket basato sul protocollo della pagina
+  const getWebSocketUrl = () => {
+    if (typeof window === "undefined") return ""
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    const url = `${protocol}//${WEBSOCKET_HOST}`
+
+    console.log("🔍 Protocollo pagina:", window.location.protocol)
+    console.log("🔍 Protocollo WebSocket:", protocol)
+    console.log("🔍 URL WebSocket finale:", url)
+
+    return url
+  }
+
   const connect = () => {
     try {
-      console.log("🔌 Tentativo connessione WebSocket a:", WEBSOCKET_URL)
+      const wsUrl = getWebSocketUrl()
+      if (!wsUrl) {
+        setError("Impossibile determinare l'URL WebSocket")
+        return
+      }
 
-      const ws = new WebSocket(WEBSOCKET_URL)
+      setConnectionUrl(wsUrl)
+      console.log("🔌 Tentativo connessione WebSocket a:", wsUrl)
+
+      const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 
       ws.onopen = () => {
-        console.log("✅ WebSocket connesso a", WEBSOCKET_URL)
+        console.log("✅ WebSocket connesso a", wsUrl)
         setIsConnected(true)
         setError(null)
         reconnectAttempts.current = 0
@@ -67,12 +89,12 @@ export function useWebSocket() {
 
       ws.onerror = (error) => {
         console.error("❌ Errore WebSocket:", error)
-        setError(`Errore di connessione WebSocket a ${WEBSOCKET_URL}`)
+        setError(`Errore di connessione WebSocket`)
         setIsConnected(false)
       }
     } catch (err) {
       console.error("❌ Errore creazione WebSocket:", err)
-      setError(`Impossibile connettersi a ${WEBSOCKET_URL}`)
+      setError(`Impossibile creare connessione WebSocket: ${err}`)
     }
   }
 
@@ -104,6 +126,7 @@ export function useWebSocket() {
     data,
     isConnected,
     error,
+    connectionUrl,
     forceReconnect,
     reconnectAttempts: reconnectAttempts.current,
   }

@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Wifi, WifiOff, Send, Trash2, Copy } from "lucide-react"
+import { Wifi, WifiOff, Send, Trash2, Copy, Shield, ShieldOff } from "lucide-react"
 
-const WEBSOCKET_URL = "ws://salanileohome.ddns.net:3004"
+const WEBSOCKET_HOST = "salanileohome.ddns.net:3004"
 
 interface LogEntry {
   timestamp: string
-  type: "connection" | "message" | "error" | "sent"
+  type: "connection" | "message" | "error" | "sent" | "info"
   content: string
 }
 
@@ -21,7 +21,18 @@ export function WebSocketTest() {
   const [isConnected, setIsConnected] = useState(false)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [message, setMessage] = useState("Ciao dal client!")
+  const [connectionUrl, setConnectionUrl] = useState("")
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  // Determina il protocollo WebSocket basato sul protocollo della pagina
+  const getWebSocketUrl = () => {
+    if (typeof window === "undefined") return ""
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    const url = `${protocol}//${WEBSOCKET_HOST}`
+
+    return url
+  }
 
   const addLog = (type: LogEntry["type"], content: string) => {
     const newLog: LogEntry = {
@@ -34,9 +45,14 @@ export function WebSocketTest() {
 
   const connectWebSocket = () => {
     try {
-      addLog("connection", `Tentativo di connessione a ${WEBSOCKET_URL}`)
+      const wsUrl = getWebSocketUrl()
+      setConnectionUrl(wsUrl)
 
-      const ws = new WebSocket(WEBSOCKET_URL)
+      addLog("info", `Protocollo pagina: ${window.location.protocol}`)
+      addLog("info", `Protocollo WebSocket: ${wsUrl.startsWith("wss:") ? "wss: (sicuro)" : "ws: (insicuro)"}`)
+      addLog("connection", `Tentativo di connessione a ${wsUrl}`)
+
+      const ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
         addLog("connection", "✅ Connessione WebSocket aperta")
@@ -89,7 +105,7 @@ export function WebSocketTest() {
   const copyLogs = () => {
     const logsText = logs.map((log) => `[${log.timestamp}] ${log.type.toUpperCase()}: ${log.content}`).join("\n")
     navigator.clipboard.writeText(logsText)
-    addLog("connection", "📋 Log copiati negli appunti")
+    addLog("info", "📋 Log copiati negli appunti")
   }
 
   // Auto-scroll to bottom when new logs are added
@@ -98,6 +114,15 @@ export function WebSocketTest() {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
   }, [logs])
+
+  // Inizializza l'URL di connessione
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = getWebSocketUrl()
+      setConnectionUrl(url)
+      addLog("info", `URL WebSocket determinato: ${url}`)
+    }
+  }, [])
 
   const getLogColor = (type: LogEntry["type"]) => {
     switch (type) {
@@ -109,6 +134,8 @@ export function WebSocketTest() {
         return "text-red-500"
       case "sent":
         return "text-purple-500"
+      case "info":
+        return "text-yellow-500"
       default:
         return "text-foreground"
     }
@@ -124,10 +151,14 @@ export function WebSocketTest() {
         return "❌"
       case "sent":
         return "📤"
+      case "info":
+        return "ℹ️"
       default:
         return "ℹ️"
     }
   }
+
+  const isSecureConnection = connectionUrl.startsWith("wss:")
 
   return (
     <Card className="w-full">
@@ -147,8 +178,19 @@ export function WebSocketTest() {
                   Disconnesso
                 </Badge>
               )}
+              {isSecureConnection ? (
+                <Badge variant="default" className="bg-blue-500">
+                  <Shield className="h-3 w-3 mr-1" />
+                  WSS
+                </Badge>
+              ) : (
+                <Badge variant="outline">
+                  <ShieldOff className="h-3 w-3 mr-1" />
+                  WS
+                </Badge>
+              )}
             </CardTitle>
-            <CardDescription>Test di connessione WebSocket a: {WEBSOCKET_URL}</CardDescription>
+            <CardDescription>Connessione: {connectionUrl || "Determinazione in corso..."}</CardDescription>
           </div>
           <div className="flex gap-2">
             {isConnected ? (
@@ -227,6 +269,16 @@ export function WebSocketTest() {
           <div className="p-2 bg-secondary/20 rounded">
             <div className="text-lg font-bold">{logs.filter((l) => l.type === "connection").length}</div>
             <div className="text-xs text-muted-foreground">Eventi Connessione</div>
+          </div>
+        </div>
+
+        {/* Info Protocollo */}
+        <div className="p-3 bg-secondary/10 rounded-lg text-sm">
+          <div className="font-medium mb-2">Informazioni Protocollo:</div>
+          <div className="space-y-1 text-muted-foreground">
+            <div>• Pagina: {typeof window !== "undefined" ? window.location.protocol : "N/A"}</div>
+            <div>• WebSocket: {isSecureConnection ? "wss: (sicuro)" : "ws: (insicuro)"}</div>
+            <div>• Host: {WEBSOCKET_HOST}</div>
           </div>
         </div>
       </CardContent>
